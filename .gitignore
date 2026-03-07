@@ -1,0 +1,49 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build folders
+bin/
+obj/
+
+# Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# Logs
+*.log
+
+# NuGet
+*.nupkg
+packages/
+
+# Temporary files
+*.tmp
+*.cache
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Visual Studio Code
+.vscode/
+
+# Generated files
+*.g.cs
+*.g.i.cs
+
+# SQLite temp files
+*.sqlite
+
+# Test results
+TestResults/
+
+# Publish output
+publish/
+
+# Local settings
+appsettings.Development.json
