@@ -14,6 +14,7 @@ namespace OOPProjectTool.Data
 
         public static List<Benutzer> BenutzerListe { get; private set; } = new();
         public static List<Projekt> Projekte { get; private set; } = new();
+        public static Benutzer? CurrentUser { get; set; }
 
         private static int _projektId = 1;
         private static int _informationId = 1;
@@ -117,14 +118,21 @@ namespace OOPProjectTool.Data
             BenutzerListe.Add(new Benutzer
             {
                 Id = NextBenutzerId(),
-                Name = "Max Muster",
+                Name = "Hans",
                 Rolle = "Projektleiter"
             });
 
             BenutzerListe.Add(new Benutzer
             {
                 Id = NextBenutzerId(),
-                Name = "Anna Beispiel",
+                Name = "Lisa",
+                Rolle = "Mitarbeiter"
+            });
+
+            BenutzerListe.Add(new Benutzer
+            {
+                Id = NextBenutzerId(),
+                Name = "Max",
                 Rolle = "Mitarbeiter"
             });
         }

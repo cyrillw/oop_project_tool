@@ -11,21 +11,12 @@ namespace OOPProjectTool
         public MainWindow()
         {
             InitializeComponent();
-            AppData.Load();
             LadeDaten();
+            InitialisiereBenutzeroberflaeche();
         }
 
         private void LadeDaten()
         {
-            CmbProjektleiter.ItemsSource = null;
-            CmbProjektleiter.ItemsSource = AppData.BenutzerListe;
-
-            CmbInfoErsteller.ItemsSource = null;
-            CmbInfoErsteller.ItemsSource = AppData.BenutzerListe;
-
-            CmbKommentarErsteller.ItemsSource = null;
-            CmbKommentarErsteller.ItemsSource = AppData.BenutzerListe;
-
             LstProjekte.ItemsSource = null;
             LstProjekte.ItemsSource = AppData.Projekte;
 
@@ -34,9 +25,36 @@ namespace OOPProjectTool
 
             CmbSuchProjekt.ItemsSource = null;
             CmbSuchProjekt.ItemsSource = AppData.Projekte;
+        }
 
-            CmbSuchBenutzer.ItemsSource = null;
-            CmbSuchBenutzer.ItemsSource = AppData.BenutzerListe;
+        private void InitialisiereBenutzeroberflaeche()
+        {
+            if (AppData.CurrentUser == null)
+            {
+                MessageBox.Show("Kein Benutzer angemeldet.");
+                Close();
+                return;
+            }
+
+            TxtAktuellerBenutzer.Text = $"Angemeldet als: {AppData.CurrentUser.Name} ({AppData.CurrentUser.Rolle})";
+            TxtProjektleiterAnzeige.Text = AppData.CurrentUser.Name;
+
+            bool istProjektleiter = AppData.CurrentUser.Rolle.Equals("Projektleiter", StringComparison.OrdinalIgnoreCase);
+
+            if (!istProjektleiter)
+            {
+                MainTabControl.Items.Remove(TabProjektErfassen);
+            }
+        }
+
+        private void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            AppData.CurrentUser = null;
+
+            var loginWindow = new LoginWindow();
+            loginWindow.Show();
+
+            Close();
         }
 
         private void ProjektErstellen_Click(object sender, RoutedEventArgs e)
@@ -44,18 +62,16 @@ namespace OOPProjectTool
             if (string.IsNullOrWhiteSpace(TxtProjektName.Text) ||
                 string.IsNullOrWhiteSpace(TxtKunde.Text) ||
                 string.IsNullOrWhiteSpace(TxtKernanforderung.Text) ||
-                CmbProjektleiter.SelectedItem == null)
+                AppData.CurrentUser == null)
             {
                 MessageBox.Show("Bitte alle Pflichtfelder ausfüllen.");
                 return;
             }
 
-            var projektleiter = (Benutzer)CmbProjektleiter.SelectedItem;
-
             var projekt = Projekt.EroeffneProjekt(
                 TxtProjektName.Text.Trim(),
                 TxtKunde.Text.Trim(),
-                projektleiter,
+                AppData.CurrentUser,
                 TxtKernanforderung.Text.Trim());
 
             projekt.ProjektId = AppData.NextProjektId();
@@ -74,16 +90,16 @@ namespace OOPProjectTool
         private void InformationHinzufuegen_Click(object sender, RoutedEventArgs e)
         {
             if (CmbProjektFuerInfo.SelectedItem == null ||
-                CmbInfoErsteller.SelectedItem == null ||
                 CmbTyp.SelectedItem == null ||
-                string.IsNullOrWhiteSpace(TxtInfoInhalt.Text))
+                string.IsNullOrWhiteSpace(TxtInfoInhalt.Text) ||
+                AppData.CurrentUser == null)
             {
                 MessageBox.Show("Bitte alle Pflichtfelder ausfüllen.");
                 return;
             }
 
             var projekt = (Projekt)CmbProjektFuerInfo.SelectedItem;
-            var ersteller = (Benutzer)CmbInfoErsteller.SelectedItem;
+            var ersteller = AppData.CurrentUser;
             var typ = ((ComboBoxItem)CmbTyp.SelectedItem).Content.ToString() ?? "Text";
 
             var info = Information.ErstelleInformation(typ, TxtInfoInhalt.Text.Trim(), ersteller);
@@ -118,15 +134,15 @@ namespace OOPProjectTool
         private void KommentarHinzufuegen_Click(object sender, RoutedEventArgs e)
         {
             if (CmbKommentarInformation.SelectedItem == null ||
-                CmbKommentarErsteller.SelectedItem == null ||
-                string.IsNullOrWhiteSpace(TxtKommentar.Text))
+                string.IsNullOrWhiteSpace(TxtKommentar.Text) ||
+                AppData.CurrentUser == null)
             {
                 MessageBox.Show("Bitte alle Pflichtfelder ausfüllen.");
                 return;
             }
 
             var info = (Information)CmbKommentarInformation.SelectedItem;
-            var ersteller = (Benutzer)CmbKommentarErsteller.SelectedItem;
+            var ersteller = AppData.CurrentUser;
 
             var kommentar = Kommentar.ErstelleKommentar(TxtKommentar.Text.Trim(), ersteller);
             kommentar.KommentarId = AppData.NextKommentarId();
@@ -208,9 +224,9 @@ namespace OOPProjectTool
                 return;
             }
 
-            if (CmbSuchBenutzer.SelectedItem == null)
+            if (AppData.CurrentUser == null)
             {
-                MessageBox.Show("Bitte einen Benutzer auswählen.");
+                MessageBox.Show("Kein Benutzer angemeldet.");
                 return;
             }
 
@@ -221,7 +237,7 @@ namespace OOPProjectTool
             }
 
             var projekt = (Projekt)CmbSuchProjekt.SelectedItem;
-            var benutzer = (Benutzer)CmbSuchBenutzer.SelectedItem;
+            var benutzer = AppData.CurrentUser;
             var suchTag = TxtSuchTag.Text.Trim();
 
             var resultate = benutzer.SucheInformationen(projekt.Informationen, suchTag);
@@ -235,7 +251,7 @@ namespace OOPProjectTool
             }
         }
 
-        private void ZeigeBildVorschau(Information info)
+        private void ZeigeBildVorschau(Information? info)
         {
             ImgVorschau.Source = null;
 
