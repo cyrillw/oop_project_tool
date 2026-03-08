@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using OOPProjectTool.Data;
 using OOPProjectTool.Models;
+using System.Windows.Media.Imaging;
 
 namespace OOPProjectTool
 {
@@ -30,6 +31,12 @@ namespace OOPProjectTool
 
             CmbProjektFuerInfo.ItemsSource = null;
             CmbProjektFuerInfo.ItemsSource = AppData.Projekte;
+
+            CmbSuchProjekt.ItemsSource = null;
+            CmbSuchProjekt.ItemsSource = AppData.Projekte;
+
+            CmbSuchBenutzer.ItemsSource = null;
+            CmbSuchBenutzer.ItemsSource = AppData.BenutzerListe;
         }
 
         private void ProjektErstellen_Click(object sender, RoutedEventArgs e)
@@ -155,6 +162,11 @@ namespace OOPProjectTool
             {
                 CmbKommentarInformation.SelectedItem = info;
                 AktualisiereKommentare(info);
+                ZeigeBildVorschau(info);
+            }
+            else
+            {
+                ZeigeBildVorschau(null);
             }
         }
 
@@ -171,6 +183,7 @@ namespace OOPProjectTool
             LstInformationen.ItemsSource = null;
             LstInformationen.ItemsSource = projekt.Informationen;
 
+            ZeigeBildVorschau(null);
             AktualisiereKommentarInformationen();
         }
 
@@ -186,5 +199,88 @@ namespace OOPProjectTool
             LstKommentare.ItemsSource = null;
             LstKommentare.ItemsSource = info.Kommentare;
         }
+
+        private void Suche_Click(object sender, RoutedEventArgs e)
+        {
+            if (CmbSuchProjekt.SelectedItem == null)
+            {
+                MessageBox.Show("Bitte ein Projekt auswählen.");
+                return;
+            }
+
+            if (CmbSuchBenutzer.SelectedItem == null)
+            {
+                MessageBox.Show("Bitte einen Benutzer auswählen.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(TxtSuchTag.Text))
+            {
+                MessageBox.Show("Bitte einen Tag eingeben.");
+                return;
+            }
+
+            var projekt = (Projekt)CmbSuchProjekt.SelectedItem;
+            var benutzer = (Benutzer)CmbSuchBenutzer.SelectedItem;
+            var suchTag = TxtSuchTag.Text.Trim();
+
+            var resultate = benutzer.SucheInformationen(projekt.Informationen, suchTag);
+
+            LstSuchresultate.ItemsSource = null;
+            LstSuchresultate.ItemsSource = resultate;
+
+            if (resultate.Count == 0)
+            {
+                MessageBox.Show("Keine passenden Informationen gefunden.");
+            }
+        }
+
+        private void ZeigeBildVorschau(Information info)
+        {
+            ImgVorschau.Source = null;
+
+            if (info == null)
+            {
+                TxtBildHinweis.Text = "Keine Bild-URL ausgewählt.";
+                TxtBildHinweis.Visibility = Visibility.Visible;
+                return;
+            }
+
+            if (!string.Equals(info.Typ, "Bild-URL", StringComparison.OrdinalIgnoreCase))
+            {
+                TxtBildHinweis.Text = "Die ausgewählte Information ist kein Bild.";
+                TxtBildHinweis.Visibility = Visibility.Visible;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(info.Inhalt))
+            {
+                TxtBildHinweis.Text = "Keine Bild-URL vorhanden.";
+                TxtBildHinweis.Visibility = Visibility.Visible;
+                return;
+            }
+
+            try
+            {
+                var uri = new Uri(info.Inhalt, UriKind.Absolute);
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = uri;
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+
+                ImgVorschau.Source = bitmap;
+                TxtBildHinweis.Visibility = Visibility.Collapsed;
+            }
+            catch
+            {
+                ImgVorschau.Source = null;
+                TxtBildHinweis.Text = "Bild konnte nicht geladen werden.";
+                TxtBildHinweis.Visibility = Visibility.Visible;
+            }
+        }
+
     }
+
+
 }

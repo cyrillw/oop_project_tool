@@ -66,9 +66,33 @@
                         <Button Content="Information hinzufügen" Height="35" Click="InformationHinzufuegen_Click"/>
                     </StackPanel>
 
-                    <GroupBox Header="Informationen im Projekt" Grid.Column="1">
-                        <ListBox x:Name="LstInformationen" SelectionChanged="LstInformationen_SelectionChanged"/>
-                    </GroupBox>
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="2*" />
+                            <RowDefinition Height="2*" />
+                        </Grid.RowDefinitions>
+
+                        <GroupBox Header="Informationen im Projekt" Grid.Row="0" Margin="0,0,0,10">
+                            <ListBox x:Name="LstInformationen" SelectionChanged="LstInformationen_SelectionChanged"/>
+                        </GroupBox>
+
+                        <GroupBox Header="Bildvorschau" Grid.Row="1">
+                            <Grid>
+                                <TextBlock x:Name="TxtBildHinweis"
+                       Text="Keine Bild-URL ausgewählt."
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontStyle="Italic"/>
+
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                    <Image x:Name="ImgVorschau"
+                       Stretch="Uniform"
+                       MaxHeight="300"
+                       MaxWidth="500"/>
+                                </ScrollViewer>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
                 </Grid>
             </TabItem>
 
@@ -94,6 +118,31 @@
 
                     <GroupBox Header="Kommentare zur Information" Grid.Column="1">
                         <ListBox x:Name="LstKommentare"/>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Suche">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Margin="0,0,20,0">
+                        <TextBlock Text="Projekt" FontWeight="Bold"/>
+                        <ComboBox x:Name="CmbSuchProjekt" Margin="0,5,0,10"/>
+
+                        <TextBlock Text="Benutzer" FontWeight="Bold"/>
+                        <ComboBox x:Name="CmbSuchBenutzer" DisplayMemberPath="Name" Margin="0,5,0,10"/>
+
+                        <TextBlock Text="Tag" FontWeight="Bold"/>
+                        <TextBox x:Name="TxtSuchTag" Margin="0,5,0,10"/>
+
+                        <Button Content="Suchen" Height="35" Click="Suche_Click"/>
+                    </StackPanel>
+
+                    <GroupBox Header="Suchresultate" Grid.Column="1">
+                        <ListBox x:Name="LstSuchresultate"/>
                     </GroupBox>
                 </Grid>
             </TabItem>
