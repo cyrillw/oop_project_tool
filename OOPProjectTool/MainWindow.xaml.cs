@@ -10,7 +10,7 @@ namespace OOPProjectTool
         public MainWindow()
         {
             InitializeComponent();
-            AppData.Seed();
+            AppData.Load();
             LadeDaten();
         }
 
@@ -54,6 +54,7 @@ namespace OOPProjectTool
             projekt.ProjektId = AppData.NextProjektId();
 
             AppData.Projekte.Add(projekt);
+            AppData.Save();
 
             TxtProjektName.Clear();
             TxtKunde.Clear();
@@ -97,6 +98,7 @@ namespace OOPProjectTool
             }
 
             projekt.FuegeInformationHinzu(info);
+            AppData.Save();
 
             TxtInfoInhalt.Clear();
             TxtTags.Clear();
@@ -123,6 +125,7 @@ namespace OOPProjectTool
             kommentar.KommentarId = AppData.NextKommentarId();
 
             info.FuegeKommentarHinzu(kommentar);
+            AppData.Save();
 
             TxtKommentar.Clear();
             AktualisiereKommentare(info);
