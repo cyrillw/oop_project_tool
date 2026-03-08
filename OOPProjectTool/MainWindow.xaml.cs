@@ -1,8 +1,10 @@
-﻿using System.Windows;
+﻿using System;
+using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using OOPProjectTool.Data;
 using OOPProjectTool.Models;
-using System.Windows.Media.Imaging;
 
 namespace OOPProjectTool
 {
@@ -13,18 +15,6 @@ namespace OOPProjectTool
             InitializeComponent();
             LadeDaten();
             InitialisiereBenutzeroberflaeche();
-        }
-
-        private void LadeDaten()
-        {
-            LstProjekte.ItemsSource = null;
-            LstProjekte.ItemsSource = AppData.Projekte;
-
-            CmbProjektFuerInfo.ItemsSource = null;
-            CmbProjektFuerInfo.ItemsSource = AppData.Projekte;
-
-            CmbSuchProjekt.ItemsSource = null;
-            CmbSuchProjekt.ItemsSource = AppData.Projekte;
         }
 
         private void InitialisiereBenutzeroberflaeche()
@@ -47,14 +37,13 @@ namespace OOPProjectTool
             }
         }
 
-        private void Logout_Click(object sender, RoutedEventArgs e)
+        private void LadeDaten()
         {
-            AppData.CurrentUser = null;
+            LstProjekte.ItemsSource = null;
+            LstProjekte.ItemsSource = AppData.Projekte;
 
-            var loginWindow = new LoginWindow();
-            loginWindow.Show();
-
-            Close();
+            CmbProjektFuerInfo.ItemsSource = null;
+            CmbProjektFuerInfo.ItemsSource = AppData.Projekte;
         }
 
         private void ProjektErstellen_Click(object sender, RoutedEventArgs e)
@@ -99,10 +88,9 @@ namespace OOPProjectTool
             }
 
             var projekt = (Projekt)CmbProjektFuerInfo.SelectedItem;
-            var ersteller = AppData.CurrentUser;
             var typ = ((ComboBoxItem)CmbTyp.SelectedItem).Content.ToString() ?? "Text";
 
-            var info = Information.ErstelleInformation(typ, TxtInfoInhalt.Text.Trim(), ersteller);
+            var info = Information.ErstelleInformation(typ, TxtInfoInhalt.Text.Trim(), AppData.CurrentUser);
             info.InformationId = AppData.NextInformationId();
 
             var tags = TxtTags.Text
@@ -127,24 +115,21 @@ namespace OOPProjectTool
             TxtTags.Clear();
 
             AktualisiereInformationen(projekt);
-            AktualisiereKommentarInformationen();
+            LstInformationen.SelectedItem = info;
             MessageBox.Show("Information wurde hinzugefügt.");
         }
 
         private void KommentarHinzufuegen_Click(object sender, RoutedEventArgs e)
         {
-            if (CmbKommentarInformation.SelectedItem == null ||
+            if (LstInformationen.SelectedItem is not Information info ||
                 string.IsNullOrWhiteSpace(TxtKommentar.Text) ||
                 AppData.CurrentUser == null)
             {
-                MessageBox.Show("Bitte alle Pflichtfelder ausfüllen.");
+                MessageBox.Show("Bitte zuerst eine Information auswählen und Kommentartext eingeben.");
                 return;
             }
 
-            var info = (Information)CmbKommentarInformation.SelectedItem;
-            var ersteller = AppData.CurrentUser;
-
-            var kommentar = Kommentar.ErstelleKommentar(TxtKommentar.Text.Trim(), ersteller);
+            var kommentar = Kommentar.ErstelleKommentar(TxtKommentar.Text.Trim(), AppData.CurrentUser);
             kommentar.KommentarId = AppData.NextKommentarId();
 
             info.FuegeKommentarHinzu(kommentar);
@@ -155,70 +140,9 @@ namespace OOPProjectTool
             MessageBox.Show("Kommentar wurde hinzugefügt.");
         }
 
-        private void LstProjekte_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (LstProjekte.SelectedItem is Projekt projekt)
-            {
-                CmbProjektFuerInfo.SelectedItem = projekt;
-                AktualisiereInformationen(projekt);
-            }
-        }
-
-        private void CmbProjektFuerInfo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (CmbProjektFuerInfo.SelectedItem is Projekt projekt)
-            {
-                AktualisiereInformationen(projekt);
-            }
-        }
-
-        private void LstInformationen_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (LstInformationen.SelectedItem is Information info)
-            {
-                CmbKommentarInformation.SelectedItem = info;
-                AktualisiereKommentare(info);
-                ZeigeBildVorschau(info);
-            }
-            else
-            {
-                ZeigeBildVorschau(null);
-            }
-        }
-
-        private void CmbKommentarInformation_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (CmbKommentarInformation.SelectedItem is Information info)
-            {
-                AktualisiereKommentare(info);
-            }
-        }
-
-        private void AktualisiereInformationen(Projekt projekt)
-        {
-            LstInformationen.ItemsSource = null;
-            LstInformationen.ItemsSource = projekt.Informationen;
-
-            ZeigeBildVorschau(null);
-            AktualisiereKommentarInformationen();
-        }
-
-        private void AktualisiereKommentarInformationen()
-        {
-            var infos = AppData.Projekte.SelectMany(p => p.Informationen).ToList();
-            CmbKommentarInformation.ItemsSource = null;
-            CmbKommentarInformation.ItemsSource = infos;
-        }
-
-        private void AktualisiereKommentare(Information info)
-        {
-            LstKommentare.ItemsSource = null;
-            LstKommentare.ItemsSource = info.Kommentare;
-        }
-
         private void Suche_Click(object sender, RoutedEventArgs e)
         {
-            if (CmbSuchProjekt.SelectedItem == null)
+            if (CmbProjektFuerInfo.SelectedItem == null)
             {
                 MessageBox.Show("Bitte ein Projekt auswählen.");
                 return;
@@ -236,19 +160,103 @@ namespace OOPProjectTool
                 return;
             }
 
-            var projekt = (Projekt)CmbSuchProjekt.SelectedItem;
-            var benutzer = AppData.CurrentUser;
-            var suchTag = TxtSuchTag.Text.Trim();
+            var projekt = (Projekt)CmbProjektFuerInfo.SelectedItem;
+            var resultate = AppData.CurrentUser.SucheInformationen(projekt.Informationen, TxtSuchTag.Text.Trim());
 
-            var resultate = benutzer.SucheInformationen(projekt.Informationen, suchTag);
+            LstInformationen.ItemsSource = null;
+            LstInformationen.ItemsSource = resultate;
 
-            LstSuchresultate.ItemsSource = null;
-            LstSuchresultate.ItemsSource = resultate;
+            LeereDetailAnsicht();
 
             if (resultate.Count == 0)
             {
                 MessageBox.Show("Keine passenden Informationen gefunden.");
             }
+        }
+
+        private void SucheZuruecksetzen_Click(object sender, RoutedEventArgs e)
+        {
+            TxtSuchTag.Clear();
+
+            if (CmbProjektFuerInfo.SelectedItem is Projekt projekt)
+            {
+                AktualisiereInformationen(projekt);
+            }
+            else
+            {
+                LstInformationen.ItemsSource = null;
+                LeereDetailAnsicht();
+            }
+        }
+
+        private void LstProjekte_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LstProjekte.SelectedItem is Projekt projekt)
+            {
+                CmbProjektFuerInfo.SelectedItem = projekt;
+                MainTabControl.SelectedIndex = 1;
+                AktualisiereInformationen(projekt);
+            }
+        }
+
+        private void CmbProjektFuerInfo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CmbProjektFuerInfo.SelectedItem is Projekt projekt)
+            {
+                AktualisiereInformationen(projekt);
+            }
+            else
+            {
+                LstInformationen.ItemsSource = null;
+                LeereDetailAnsicht();
+            }
+        }
+
+        private void LstInformationen_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LstInformationen.SelectedItem is Information info)
+            {
+                ZeigeInformationDetails(info);
+                AktualisiereKommentare(info);
+                ZeigeBildVorschau(info);
+            }
+            else
+            {
+                LeereDetailAnsicht();
+            }
+        }
+
+        private void AktualisiereInformationen(Projekt projekt)
+        {
+            LstInformationen.ItemsSource = null;
+            LstInformationen.ItemsSource = projekt.Informationen;
+            LeereDetailAnsicht();
+        }
+
+        private void AktualisiereKommentare(Information info)
+        {
+            LstKommentare.ItemsSource = null;
+            LstKommentare.ItemsSource = info.Kommentare;
+        }
+
+        private void ZeigeInformationDetails(Information info)
+        {
+            TxtDetailTyp.Text = info.Typ;
+            TxtDetailErsteller.Text = info.Ersteller?.Name ?? "Unbekannt";
+            TxtDetailInhalt.Text = info.Inhalt;
+            TxtDetailTags.Text = info.Tags.Count > 0 ? string.Join(", ", info.Tags) : "";
+        }
+
+        private void LeereDetailAnsicht()
+        {
+            TxtDetailTyp.Clear();
+            TxtDetailErsteller.Clear();
+            TxtDetailInhalt.Clear();
+            TxtDetailTags.Clear();
+            TxtKommentar.Clear();
+
+            LstKommentare.ItemsSource = null;
+            ZeigeBildVorschau(null);
         }
 
         private void ZeigeBildVorschau(Information? info)
@@ -296,7 +304,14 @@ namespace OOPProjectTool
             }
         }
 
+        private void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            AppData.CurrentUser = null;
+
+            var loginWindow = new LoginWindow();
+            loginWindow.Show();
+
+            Close();
+        }
     }
-
-
 }
