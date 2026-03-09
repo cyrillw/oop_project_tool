@@ -129,11 +129,30 @@
                     </StackPanel>
 
                     <!-- Mitte: Informationen -->
-                    <GroupBox Grid.Column="2" Header="Informationen im Projekt">
-                        <ListBox x:Name="LstInformationen"
-                                 Margin="10"
-                                 SelectionChanged="LstInformationen_SelectionChanged"/>
-                    </GroupBox>
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <GroupBox Header="Kernanforderung des Projekts" Grid.Row="0" Margin="0,0,0,0">
+                            <TextBox x:Name="TxtProjektKernanforderungAnzeige"
+                                     Margin="10"
+                                     IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     MinHeight="80"
+                                     MaxHeight="120"
+                                     VerticalScrollBarVisibility="Auto"/>
+                        </GroupBox>
+
+                        <GroupBox Grid.Row="2" Header="Informationen im Projekt">
+                            <ListBox x:Name="LstInformationen"
+                                     Margin="10"
+                                     SelectionChanged="LstInformationen_SelectionChanged"/>
+                        </GroupBox>
+                    </Grid>
 
                     <!-- Rechts: Details, Bild, Kommentare -->
                     <Grid Grid.Column="4">

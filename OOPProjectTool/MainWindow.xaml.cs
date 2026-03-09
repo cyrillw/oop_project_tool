@@ -195,6 +195,7 @@ namespace OOPProjectTool
             {
                 CmbProjektFuerInfo.SelectedItem = projekt;
                 MainTabControl.SelectedIndex = 1;
+                ZeigeProjektKernanforderung(projekt);
                 AktualisiereInformationen(projekt);
             }
         }
@@ -203,10 +204,12 @@ namespace OOPProjectTool
         {
             if (CmbProjektFuerInfo.SelectedItem is Projekt projekt)
             {
+                ZeigeProjektKernanforderung(projekt);
                 AktualisiereInformationen(projekt);
             }
             else
             {
+                TxtProjektKernanforderungAnzeige.Clear();
                 LstInformationen.ItemsSource = null;
                 LeereDetailAnsicht();
             }
@@ -231,6 +234,17 @@ namespace OOPProjectTool
             LstInformationen.ItemsSource = null;
             LstInformationen.ItemsSource = projekt.Informationen;
             LeereDetailAnsicht();
+        }
+
+        private void ZeigeProjektKernanforderung(Projekt? projekt)
+        {
+            if (projekt == null)
+            {
+                TxtProjektKernanforderungAnzeige.Clear();
+                return;
+            }
+
+            TxtProjektKernanforderungAnzeige.Text = projekt.KernanforderungImProjekt ?? "";
         }
 
         private void AktualisiereKommentare(Information info)
